@@ -1,1 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>iQube Tracker — Charge</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .tracker-layout {
+      max-width: 520px; margin: 0 auto;
+      padding: 32px clamp(16px, 4vw, 32px) 80px;
+    }
 
+    /* status dot in header */
+    .page-header {
+      display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 28px;
+    }
+    .page-header h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.3px; }
+    .page-header small { font-size: 12px; color: var(--muted); font-family: var(--mono); display: block; margin-top: 2px; }
+
+    .status-indicator {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; font-family: var(--mono); color: var(--muted);
+    }
+    .status-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--muted);
+      transition: all 0.3s;
+    }
+    .status-dot.charging {
+      background: var(--green);
+      animation: glow 2s infinite;
+    }
+
+    /* battery card */
+    .battery-card {
+      margin-bottom: 16px;
+    }
+    .batt-stats {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 10px; margin-top: 18px;
+    }
+    .bstat {
+      background: var(--surface2); border-radius: var(--radius-sm); padding: 12px;
+    }
+    .bstat-label { font-size: 10px; font-family: var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 5px; }
+    .bstat-val { font-size: 18px; font-weight: 500; font-family: var(--mono); }
+    .bstat-unit { font-size: 11px; color: var(--muted); font-weight: 400; }
+
+    /* timer card */
+    .timer-card { margin-bottom: 16px; display: none; }
+    .timer-card.active { display: block; }
+
+    .timer-head {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
+    }
+    .timer-countdown {
+      font-family: var(--mono); font-size: 44px; font-weight: 500;
+      color: var(--green); letter-spacing: 0.04em;
+      text-align: center; margin: 4px 0 6px;
+      transition: color 0.3s;
+    }
+    .timer-sub {
+      text-align: center; font-size: 12px; color: var(--muted); font-family: var(--mono);
+    }
+    .timer-track {
+      width: 100%; height: 3px; background: var(--surface2);
+      border-radius: 2px; overflow: hidden; margin-top: 16px;
+    }
+    .timer-fill {
+      height: 100%; background: var(--green);
+      border-radius: 2px; transition: width 1s linear; width: 0%;
+    }
+
+    /* form cards */
+    .form-card { margin-bottom: 16px; }
+    .form-title {
+      font-size: 11px; font-family: var(--mono);
+      color: var(--muted); text-transform: uppercase;
+      letter-spacing: 0.1em; margin-bottom: 20px;
+    }
+    .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+    .slider-row { margin-bottom: 6px; }
+
+    .tip-box {
+      display: flex; align-items: flex-start; gap: 10px;
+      background: var(--amber-dim); border: 1px solid rgba(245,166,35,0.2);
+      border-radius: var(--radius-sm); padding: 12px 14px; margin: 16px 0;
+    }
+    .tip-box p { font-size: 12px; color: var(--amber); line-height: 1.55; }
+
+    .btn-row { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+
+    /* hide/show states */
+    .start-view { display: block; }
+    .start-view.hidden { display: none; }
+    .stop-view { display: none; }
+    .stop-view.active { display: block; }
+
+    /* quick stats ribbon */
+    .ribbon {
+      display: flex; gap: 10px; overflow-x: auto;
+      padding-bottom: 4px; margin-bottom: 16px;
+      scrollbar-width: none;
+    }
+    .ribbon::-webkit-scrollbar { display: none; }
+    .ribbon-item {
+      flex-shrink: 0;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 12px 16px;
+      min-width: 100px; text-align: center;
+    }
+    .ribbon-val { font-family: var(--mono); font-size: 18px; font-weight: 500; color: var(--green); }
+    .ribbon-label { font-size: 10px; color: var(--muted); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 3px; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">
+    <div class="bolt">⚡</div>
+    iQube Tracker
+  </div>
+  <div class="nav-links">
+    <a href="index.html"><span>Home</span></a>
+    <a href="tracker.html" class="active"><span>Tracker</span></a>
+    <a href="history.html"><span>History</span></a>
+  </div>
+</nav>
+
+<div class="page">
+<div class="tracker-layout">
+
+  <!-- Page header -->
+  <div class="page-header fade-up">
+    <div>
+      <h1>Charge Tracker</h1>
+      <small>TVS iQube 2.2 kWh · 950W charger</small>
+    </div>
+    <div class="status-indicator">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">idle</span>
+    </div>
+  </div>
+
+  <!-- Quick stats ribbon -->
+  <div class="ribbon fade-up fade-up-1" id="statsRibbon">
+    <div class="ribbon-item">
+      <div class="ribbon-val" id="rib-sessions">0</div>
+      <div class="ribbon-label">sessions</div>
+    </div>
+    <div class="ribbon-item">
+      <div class="ribbon-val" id="rib-km">0</div>
+      <div class="ribbon-label">total km</div>
+    </div>
+    <div class="ribbon-item">
+      <div class="ribbon-val" id="rib-cost">₹0</div>
+      <div class="ribbon-label">total cost</div>
+    </div>
+    <div class="ribbon-item">
+      <div class="ribbon-val" id="rib-kwh">0</div>
+      <div class="ribbon-label">kWh used</div>
+    </div>
+  </div>
+
+  <!-- Battery display -->
+  <div class="card battery-card fade-up fade-up-2">
+    <div class="section-label">Battery level</div>
+    <div class="battery-shell">
+      <div class="battery-body">
+        <div class="battery-fill" id="battFill">
+          <span class="battery-pct-label" id="battLabel">—</span>
+        </div>
+      </div>
+      <div class="battery-nub"></div>
+    </div>
+    <div class="batt-stats">
+      <div class="bstat">
+        <div class="bstat-label">Range</div>
+        <div class="bstat-val" id="b-range">—<span class="bstat-unit"> km</span></div>
+      </div>
+      <div class="bstat">
+        <div class="bstat-label">kWh left</div>
+        <div class="bstat-val" id="b-kwh">—</div>
+      </div>
+      <div class="bstat">
+        <div class="bstat-label">To 80%</div>
+        <div class="bstat-val" id="b-eta">—<span class="bstat-unit"> min</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timer card (shown while charging) -->
+  <div class="card timer-card fade-up fade-up-3" id="timerCard">
+    <div class="timer-head">
+      <span class="section-label" style="margin:0;">Unplug reminder</span>
+      <span class="tag amber" id="timerBadge">⚡ charging</span>
+    </div>
+    <div class="timer-countdown" id="timerDisplay">00:00:00</div>
+    <div class="timer-sub" id="timerSub">Time until target charge</div>
+    <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
+  </div>
+
+  <!-- Start form -->
+  <div class="card form-card start-view fade-up fade-up-3" id="startView">
+    <div class="form-title">New charging session</div>
+
+    <div class="input-row">
+      <div class="input-group">
+        <label>Start %</label>
+        <div class="input-wrap">
+          <input type="number" id="startPct" min="0" max="99" value="20">
+          <span class="input-suffix">%</span>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>Target %</label>
+        <div class="input-wrap">
+          <input type="number" id="targetPct" min="1" max="100" value="80">
+          <span class="input-suffix">%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="slider-row">
+      <input type="range" id="startSlider" min="0" max="99" value="20">
+    </div>
+
+    <div class="tip-box">
+      <span style="font-size:16px; flex-shrink:0;">💡</span>
+      <p>Charging to <strong style="color:#f5a623;">80%</strong> protects your battery long-term.
+        Full charge (0→100%) on your 950W charger takes ~3h 30min.</p>
+    </div>
+
+    <button class="btn btn-primary btn-full" onclick="startCharging()">⚡ Start charging</button>
+  </div>
+
+  <!-- Stop form -->
+  <div class="card form-card stop-view" id="stopView">
+    <div class="form-title">End session</div>
+
+    <div class="input-row">
+      <div class="input-group">
+        <label>End %</label>
+        <div class="input-wrap">
+          <input type="number" id="endPct" min="0" max="100" value="80">
+          <span class="input-suffix">%</span>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>₹ / unit</label>
+        <div class="input-wrap">
+          <input type="number" id="rateInput" min="1" max="30" value="7" step="0.5">
+          <span class="input-suffix" style="right:8px; font-size:12px;">₹/kWh</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary btn-full" onclick="stopCharging()">Save session ✓</button>
+      <button class="btn btn-danger btn-full" onclick="cancelCharging()">Cancel without saving</button>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="app.js"></script>
+<script>
+  // ── State ──
+  let state = {
+    active: false,
+    startPct: 20, targetPct: 80,
+    startTime: null,
+    targetSeconds: 0,
+    timerInterval: null,
+    reminderFired: false,
+  };
+
+  // ── Bind inputs ──
+  const startSlider = document.getElementById('startSlider');
+  const startPctIn  = document.getElementById('startPct');
+  const targetPctIn = document.getElementById('targetPct');
+
+  startSlider.addEventListener('input', () => {
+    startPctIn.value = startSlider.value;
+    updateBattery(+startSlider.value);
+  });
+  startPctIn.addEventListener('input', () => {
+    startSlider.value = startPctIn.value;
+    updateBattery(+startPctIn.value);
+  });
+  targetPctIn.addEventListener('input', () => updateBattery(+startPctIn.value));
+  document.getElementById('endPct').addEventListener('input', () => {
+    if (state.active) updateBattery(+document.getElementById('endPct').value);
+  });
+
+  // ── Battery display ──
+  function updateBattery(pct) {
+    pct = Math.max(0, Math.min(100, Math.round(pct)));
+    renderBattery(pct, document.getElementById('battFill'), document.getElementById('battLabel'));
+
+    const km   = calcRangeFromPct(pct);
+    const kwh  = (pct / 100 * SPECS.batteryKwh).toFixed(2);
+    document.getElementById('b-range').innerHTML = `${km}<span class="bstat-unit"> km</span>`;
+    document.getElementById('b-kwh').innerHTML   = `${kwh}<span class="bstat-unit"> kWh</span>`;
+
+    if (pct < 80) {
+      const mins = calcChargeMinutes(pct, 80);
+      document.getElementById('b-eta').innerHTML = `${mins}<span class="bstat-unit"> min</span>`;
+    } else {
+      document.getElementById('b-eta').innerHTML = `—<span class="bstat-unit"> min</span>`;
+    }
+  }
+
+  // ── Start charging ──
+  function startCharging() {
+    const sp = parseInt(startPctIn.value);
+    const tp = parseInt(targetPctIn.value);
+    if (isNaN(sp) || isNaN(tp) || sp >= tp || sp < 0 || tp > 100) {
+      showToast('Check % values — target must be greater than start', 'err'); return;
+    }
+
+    state = {
+      active: true, startPct: sp, targetPct: tp,
+      startTime: Date.now(), reminderFired: false,
+      targetSeconds: calcChargeMinutes(sp, tp) * 60,
+    };
+
+    // UI switch
+    document.getElementById('startView').classList.add('hidden');
+    document.getElementById('stopView').classList.add('active');
+    document.getElementById('timerCard').classList.add('active');
+    document.getElementById('statusDot').classList.add('charging');
+    document.getElementById('statusText').textContent = 'charging';
+    document.getElementById('endPct').value = tp;
+
+    updateBattery(sp);
+    startTimer();
+    requestNotifPermission();
+    showToast('Charging started ⚡');
+  }
+
+  // ── Timer loop ──
+  function startTimer() {
+    state.timerInterval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - state.startTime) / 1000);
+      const remaining = Math.max(0, state.targetSeconds - elapsed);
+
+      // Countdown display
+      document.getElementById('timerDisplay').textContent = fmtSeconds(remaining);
+
+      // Progress
+      const prog = state.targetSeconds > 0
+        ? Math.min(100, (elapsed / state.targetSeconds) * 100) : 100;
+      document.getElementById('timerFill').style.width = prog + '%';
+
+      if (remaining > 0) {
+        document.getElementById('timerSub').textContent =
+          `${Math.ceil(remaining/60)} min until ${state.targetPct}% charge`;
+      } else {
+        document.getElementById('timerSub').textContent =
+          `Target ${state.targetPct}% reached — unplug now!`;
+        document.getElementById('timerDisplay').style.color = 'var(--amber)';
+        document.getElementById('timerBadge').textContent = '✓ done';
+        document.getElementById('timerBadge').className = 'tag green';
+      }
+
+      // Fire once
+      if (remaining === 0 && !state.reminderFired) {
+        state.reminderFired = true;
+        showToast('🔔 Unplug now! Target reached.', 'warn');
+        sendNotification('iQube Tracker', `Battery at ${state.targetPct}% — time to unplug! ⚡`);
+      }
+
+      // Live battery interpolation
+      const currentPct = calcPctFromElapsed(state.startPct, elapsed);
+      const capped = Math.min(state.targetPct, currentPct);
+      renderBattery(capped, document.getElementById('battFill'), document.getElementById('battLabel'));
+    }, 1000);
+  }
+
+  // ── Stop charging ──
+  function stopCharging() {
+    const ep   = parseInt(document.getElementById('endPct').value) || state.targetPct;
+    const rate = parseFloat(document.getElementById('rateInput').value) || 7;
+    clearInterval(state.timerInterval);
+
+    const kwh  = calcKwh(state.startPct, ep);
+    const cost = calcCost(kwh, rate);
+    const km   = calcKmGained(state.startPct, ep);
+    const durationMin = Math.round((Date.now() - state.startTime) / 60000);
+
+    saveSession({
+      id: uid(),
+      timestamp: new Date().toISOString(),
+      startPct: state.startPct, endPct: ep,
+      kwhCharged: kwh.toFixed(3),
+      cost: cost.toFixed(2),
+      kmGained: km,
+      durationMin,
+      ratePerUnit: rate,
+    });
+
+    resetUI(ep);
+    updateRibbon();
+    showToast('Session saved ✓');
+  }
+
+  // ── Cancel ──
+  function cancelCharging() {
+    clearInterval(state.timerInterval);
+    resetUI(state.startPct);
+    showToast('Session cancelled');
+  }
+
+  // ── Reset ──
+  function resetUI(pct) {
+    state.active = false;
+    document.getElementById('startView').classList.remove('hidden');
+    document.getElementById('stopView').classList.remove('active');
+    document.getElementById('timerCard').classList.remove('active');
+    document.getElementById('statusDot').classList.remove('charging');
+    document.getElementById('statusText').textContent = 'idle';
+    document.getElementById('timerDisplay').textContent = '00:00:00';
+    document.getElementById('timerDisplay').style.color = 'var(--green)';
+    document.getElementById('timerFill').style.width = '0%';
+    document.getElementById('timerBadge').textContent = '⚡ charging';
+    document.getElementById('timerBadge').className = 'tag amber';
+    startPctIn.value = pct; startSlider.value = pct;
+    updateBattery(pct);
+  }
+
+  // ── Ribbon stats ──
+  function updateRibbon() {
+    const stats = calcStats(getSessions());
+    document.getElementById('rib-sessions').textContent = stats.totalSessions;
+    document.getElementById('rib-km').textContent = stats.totalKm;
+    document.getElementById('rib-cost').textContent = '₹' + Math.round(stats.totalCost);
+    document.getElementById('rib-kwh').textContent = stats.totalKwh.toFixed(1);
+  }
+
+  // ── Init ──
+  updateBattery(20);
+  updateRibbon();
+</script>
+</body>
+</html>
