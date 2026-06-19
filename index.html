@@ -1,1 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>iQube Tracker — Home</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ── Hero ── */
+    .hero {
+      min-height: calc(100vh - var(--nav-h));
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: clamp(40px, 8vw, 100px) clamp(16px, 5vw, 48px);
+      position: relative; overflow: hidden;
+    }
+    .hero-glow {
+      position: absolute; top: -120px; left: 50%;
+      transform: translateX(-50%);
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(57,224,122,0.12) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .hero-tag { margin-bottom: 28px; }
+    .hero h1 {
+      font-size: clamp(36px, 7vw, 72px);
+      font-weight: 700; line-height: 1.08;
+      letter-spacing: -2px;
+      background: linear-gradient(160deg, #efefef 30%, #5a5a6e 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      max-width: 700px; margin-bottom: 22px;
+    }
+    .hero h1 em {
+      font-style: normal;
+      -webkit-text-fill-color: var(--green);
+    }
+    .hero p {
+      font-size: clamp(15px, 2.5vw, 18px);
+      color: var(--text2); max-width: 480px;
+      line-height: 1.7; margin-bottom: 36px;
+    }
+    .hero-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
 
+    /* ── Scooter badge ── */
+    .scooter-badge {
+      margin-top: 64px;
+      display: inline-flex; align-items: center; gap: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 20px 28px;
+      animation: fadeUp 0.6s 0.4s both;
+    }
+    .scooter-badge-icon {
+      width: 52px; height: 52px;
+      background: var(--green-dim);
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+    }
+    .scooter-badge-text h3 { font-size: 16px; font-weight: 600; margin-bottom: 3px; }
+    .scooter-badge-text p { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+
+    /* ── Spec pills ── */
+    .spec-pills {
+      display: flex; gap: 10px; flex-wrap: wrap;
+      justify-content: center; margin-top: 52px;
+      animation: fadeUp 0.6s 0.5s both;
+    }
+    .spec-pill {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 40px; padding: 10px 18px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .spec-pill-val { font-family: var(--mono); font-size: 18px; font-weight: 500; color: var(--green); }
+    .spec-pill-label { font-size: 12px; color: var(--muted); }
+
+    /* ── Features section ── */
+    .features {
+      padding: clamp(60px, 8vw, 120px) clamp(16px, 5vw, 48px);
+      max-width: 1000px; margin: 0 auto;
+    }
+    .features-header { text-align: center; margin-bottom: 56px; }
+    .features-header h2 {
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 700; letter-spacing: -1px;
+      margin-bottom: 14px;
+    }
+    .features-header p { color: var(--text2); font-size: 16px; max-width: 420px; margin: 0 auto; }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      transition: border-color 0.25s, transform 0.25s;
+    }
+    .feature-card:hover {
+      border-color: rgba(57,224,122,0.35);
+      transform: translateY(-3px);
+    }
+    .feature-icon {
+      width: 44px; height: 44px;
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; margin-bottom: 18px;
+    }
+    .feature-card h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+    .feature-card p  { font-size: 13px; color: var(--text2); line-height: 1.65; }
+
+    /* ── Divider ── */
+    .divider {
+      border: none; border-top: 1px solid var(--border);
+      margin: 0 clamp(16px, 5vw, 48px);
+    }
+
+    /* ── CTA banner ── */
+    .cta {
+      max-width: 700px; margin: 0 auto;
+      padding: clamp(60px, 8vw, 120px) clamp(16px, 5vw, 48px);
+      text-align: center;
+    }
+    .cta h2 {
+      font-size: clamp(26px, 4vw, 40px);
+      font-weight: 700; letter-spacing: -1px;
+      margin-bottom: 16px;
+    }
+    .cta p { color: var(--text2); margin-bottom: 32px; font-size: 15px; }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 24px clamp(16px, 5vw, 48px);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px;
+      color: var(--muted); font-size: 13px; font-family: var(--mono);
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">
+    <div class="bolt">⚡</div>
+    iQube Tracker
+  </div>
+  <div class="nav-links">
+    <a href="index.html" class="active"><span>Home</span></a>
+    <a href="tracker.html"><span>Tracker</span></a>
+    <a href="history.html"><span>History</span></a>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-glow"></div>
+
+    <div class="hero-tag fade-up">
+      <span class="tag green">⚡ Built for TVS iQube 2.2 kWh</span>
+    </div>
+
+    <h1 class="fade-up fade-up-1">
+      Stop forgetting<br>to <em>unplug.</em>
+    </h1>
+
+    <p class="fade-up fade-up-2">
+      A free, local charge tracker made specifically for your iQube.
+      Log sessions, track costs, get unplug reminders — no subscription needed.
+    </p>
+
+    <div class="hero-btns fade-up fade-up-3">
+      <a href="tracker.html" class="btn btn-primary">Start charging →</a>
+      <a href="history.html" class="btn btn-ghost">View history</a>
+    </div>
+
+    <div class="scooter-badge">
+      <div class="scooter-badge-icon">🛵</div>
+      <div class="scooter-badge-text">
+        <h3>TVS iQube 2.2 kWh</h3>
+        <p>MH · Home 15A socket · 950W charger</p>
+      </div>
+    </div>
+
+    <div class="spec-pills">
+      <div class="spec-pill">
+        <span class="spec-pill-val">75</span>
+        <span class="spec-pill-label">km real range</span>
+      </div>
+      <div class="spec-pill">
+        <span class="spec-pill-val">2.2</span>
+        <span class="spec-pill-label">kWh battery</span>
+      </div>
+      <div class="spec-pill">
+        <span class="spec-pill-val">2h45</span>
+        <span class="spec-pill-label">0→80% charge</span>
+      </div>
+      <div class="spec-pill">
+        <span class="spec-pill-val">75</span>
+        <span class="spec-pill-label">km/h top speed</span>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- Features -->
+  <section class="features">
+    <div class="features-header">
+      <h2>Everything the TVS app<br>charged you for — free.</h2>
+      <p>Designed around how you actually use your iQube every day.</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card fade-up">
+        <div class="feature-icon" style="background:#0d2b1a;">🔔</div>
+        <h3>Unplug reminders</h3>
+        <p>Set a timer when you plug in. Get a browser notification when your target charge is reached — no more overcharging.</p>
+      </div>
+      <div class="feature-card fade-up fade-up-1">
+        <div class="feature-icon" style="background:#2e1c00;">⚡</div>
+        <h3>Smart charge timer</h3>
+        <p>Auto-calculates charging time based on your start %, target %, and your 950W charger. Real math, real specs.</p>
+      </div>
+      <div class="feature-card fade-up fade-up-2">
+        <div class="feature-icon" style="background:#0d1f3a;">₹</div>
+        <h3>Cost tracking</h3>
+        <p>Log kWh used per session and see exactly how much each charge costs at your MSEDCL rate. No guessing.</p>
+      </div>
+      <div class="feature-card fade-up fade-up-3">
+        <div class="feature-icon" style="background:#1c1c21;">📋</div>
+        <h3>Session history</h3>
+        <p>Every charge logged locally in your browser. See patterns, total km gained, and lifetime charging cost.</p>
+      </div>
+      <div class="feature-card fade-up fade-up-4">
+        <div class="feature-icon" style="background:#0d2b1a;">🔋</div>
+        <h3>Battery health tips</h3>
+        <p>Built-in reminders to keep your charge between 20–80% to maximise your lithium-ion battery lifespan.</p>
+      </div>
+      <div class="feature-card fade-up fade-up-5">
+        <div class="feature-icon" style="background:#2b0f0d;">🔒</div>
+        <h3>100% private</h3>
+        <p>All data stays in your browser's localStorage. No account, no server, no subscription. Yours forever.</p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- CTA -->
+  <section class="cta">
+    <h2>Ready to track your<br>first charge?</h2>
+    <p>Open the tracker, enter your battery %, and let it do the rest.</p>
+    <a href="tracker.html" class="btn btn-primary" style="font-size:16px; padding:15px 32px;">
+      Open tracker ⚡
+    </a>
+  </section>
+
+  <footer>
+    <span>iQube Tracker · Built with HTML, CSS & JS</span>
+    <span>Data stored locally · No subscription</span>
+  </footer>
+
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>
